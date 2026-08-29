@@ -51,7 +51,7 @@ const Login = () => {
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button
           type="submit"
-          className="bg-blue-600 text-white py-2 rounded-2xl hover:bg-blue-700"
+          className="bg-blue-600 text-white py-2 rounded-2xl hover:bg-blue-700 font-bold"
         >
           Log In
         </button>
