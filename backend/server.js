@@ -3,9 +3,15 @@ import "dotenv/config";
 import db from "./db.js";
 import authRoutes from "./routes/auth.js";
 import todoRoutes from "./routes/todos.js";
+import cors from "cors";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  }),
+);
 
 app.use(express.json());
 app.use("/api/auth", authRoutes);
