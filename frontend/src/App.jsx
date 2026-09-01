@@ -4,6 +4,8 @@ import Auth from "./components/Auth";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import TodoList from "./components/TodoList";
+import Home from "./components/Home";
+import { setOnUnauthorized } from "./api";
 
 function App() {
   const [token, setToken] = useState(() => {
@@ -18,6 +20,10 @@ function App() {
     }
   }, [token]);
 
+  useEffect(() => {
+    setOnUnauthorized(() => setToken(null));
+  }, []);
+
   return (
     <BrowserRouter>
       {token ? (
@@ -25,6 +31,7 @@ function App() {
       ) : (
         <Routes>
           <Route path="/" element={<Auth onLoginSuccess={setToken} />}>
+            <Route path="/" element={<Home />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
           </Route>
