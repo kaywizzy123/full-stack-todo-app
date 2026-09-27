@@ -1,5 +1,4 @@
 import { Outlet } from "react-router";
-import Home from "./Home";
 
 const Auth = ({ onLoginSuccess }) => {
   return (

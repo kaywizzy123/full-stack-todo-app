@@ -1,30 +1,15 @@
-import express from "express";
 import "dotenv/config";
 import db from "./db.js";
-import authRoutes from "./routes/auth.js";
-import todoRoutes from "./routes/todos.js";
-import cors from "cors";
+import app from "./app.js";
 
-const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-  }),
-);
-
-app.use(express.json());
-app.use("/api/auth", authRoutes);
-app.use("/api/todos", todoRoutes);
-
-app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "Server is running",
-  });
-});
 
 function startServer() {
   try {
+    if (!process.env.JWT_SECRET_KEY) {
+      throw new Error("JWT_SECRET_KEY is not set");
+    }
+
     // db.js already runs CREATE TABLE on import
     //but this confirms the connection is alive
 

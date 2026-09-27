@@ -6,6 +6,26 @@ const router = express.Router();
 
 router.use(verifyToken);
 
+const MAX_TITLE_LENGTH = 200;
+
+// Returns an error message, or null if the title is valid
+function validateTitle(title) {
+  if (typeof title !== "string" || !title.trim()) {
+    return "Title is required";
+  }
+  if (title.trim().length > MAX_TITLE_LENGTH) {
+    return `Title must be ${MAX_TITLE_LENGTH} characters or fewer`;
+  }
+  return null;
+}
+
+router.param("id", (req, res, next, id) => {
+  if (!/^[1-9]\d*$/.test(id)) {
+    return res.status(400).json({ error: "Invalid todo id" });
+  }
+  next();
+});
+
 router.get("/", (req, res) => {
   try {
     const todos = db
@@ -23,18 +43,19 @@ router.get("/", (req, res) => {
 
 router.post("/", (req, res) => {
   try {
-    const { title } = req.body;
+    const titleError = validateTitle(req.body?.title);
 
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
+    if (titleError) {
+      return res.status(400).json({ error: titleError });
     }
+    const title = req.body.title.trim();
     const stmt = db.prepare("INSERT INTO todos (title, user_id) VALUES (?, ?)");
     const result = stmt.run(title, req.userId);
 
     res.status(201).json({
       id: result.lastInsertRowid,
       title,
-      done: false,
+      done: 0,
       user_id: req.userId,
     });
   } catch (error) {
@@ -47,12 +68,14 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
   try {
-    const { title, done } = req.body;
+    const { done } = req.body ?? {};
     const { id } = req.params;
 
-    if (!title) {
-      return res.status(400).json({ error: "Title is required" });
+    const titleError = validateTitle(req.body?.title);
+    if (titleError) {
+      return res.status(400).json({ error: titleError });
     }
+    const title = req.body.title.trim();
     const stmt = db.prepare(
       "UPDATE todos SET title = ?, done = ? WHERE id = ? AND user_id = ?",
     );
@@ -68,7 +91,7 @@ router.put("/:id", (req, res) => {
     res.status(200).json({
       id: Number(id),
       title,
-      done,
+      done: done ? 1 : 0,
       user_id: req.userId,
     });
   } catch (error) {
@@ -82,14 +105,18 @@ router.put("/:id", (req, res) => {
 router.patch("/:id", (req, res) => {
   try {
     const { id } = req.params;
-    const { title, done } = req.body;
+    const { title, done } = req.body ?? {};
 
     const fields = [];
     const values = [];
 
     if (title !== undefined) {
+      const titleError = validateTitle(title);
+      if (titleError) {
+        return res.status(400).json({ error: titleError });
+      }
       fields.push("title = ?");
-      values.push(title);
+      values.push(title.trim());
     }
 
     if (done !== undefined) {
@@ -131,9 +158,6 @@ router.patch("/:id", (req, res) => {
 router.delete("/:id", (req, res) => {
   try {
     const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({ error: "No id provided" });
-    }
     const stmt = db.prepare("DELETE FROM todos WHERE id = ? AND user_id = ?");
 
     const result = stmt.run(id, req.userId);

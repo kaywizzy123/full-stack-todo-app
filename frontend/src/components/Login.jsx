@@ -20,11 +20,11 @@ const Login = () => {
         username: cleanUsername,
         password: cleanPassword,
       });
-      const token = response.data.token;
+      const { id, username: loggedInUsername } = response.data;
       setPassword("");
       setUsername("");
       setError("");
-      onLoginSuccess(token);
+      onLoginSuccess({ id, username: loggedInUsername });
     } catch (error) {
       setError(error.response?.data?.error || "Login failed. Please try again");
     }

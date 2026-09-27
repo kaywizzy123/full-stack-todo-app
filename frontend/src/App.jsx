@@ -5,32 +5,53 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import TodoList from "./components/TodoList";
 import Home from "./components/Home";
-import { setOnUnauthorized } from "./api";
+import api, { setOnUnauthorized } from "./api";
 
 function App() {
-  const [token, setToken] = useState(() => {
-    return localStorage.getItem("token");
-  });
+  // The auth token lives in an httpOnly cookie that JavaScript can't read,
+  // so we ask the server who is logged in instead.
+  const [user, setUser] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      localStorage.setItem("token", token);
-    } else {
-      localStorage.removeItem("token");
-    }
-  }, [token]);
+    setOnUnauthorized(() => setUser(null));
 
-  useEffect(() => {
-    setOnUnauthorized(() => setToken(null));
+    // Clean up the token left over from the old localStorage-based login
+    localStorage.removeItem("token");
+
+    const checkSession = async () => {
+      try {
+        const response = await api.get("/auth/me");
+        setUser(response.data);
+      } catch {
+        setUser(null);
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+    checkSession();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error(error);
+    }
+    setUser(null);
+  };
+
+  if (checkingSession) {
+    return <div className="min-h-screen w-screen bg-neutral-950" />;
+  }
 
   return (
     <BrowserRouter>
-      {token ? (
-        <TodoList token={token} onLogout={() => setToken(null)} />
+      {user ? (
+        <TodoList user={user} onLogout={handleLogout} />
       ) : (
         <Routes>
-          <Route path="/" element={<Auth onLoginSuccess={setToken} />}>
+          <Route path="/" element={<Auth onLoginSuccess={setUser} />}>
             <Route path="/" element={<Home />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />

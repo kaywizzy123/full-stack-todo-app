@@ -15,7 +15,7 @@ const Register = () => {
     const cleanPassword = password.trim();
 
     try {
-      const response = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         username: cleanUsername,
         password: cleanPassword,
       });
@@ -25,11 +25,11 @@ const Register = () => {
         password: cleanPassword,
       });
 
-      const token = loginResponse.data.token;
+      const { id, username: loggedInUsername } = loginResponse.data;
       setUsername("");
       setPassword("");
       setError("");
-      onLoginSuccess(token);
+      onLoginSuccess({ id, username: loggedInUsername });
     } catch (error) {
       setError(
         error.response?.data?.error || "Registration failed. Please try again",
@@ -47,6 +47,9 @@ const Register = () => {
           onChange={(e) => setUsername(e.target.value)}
           className="border border-neutral-700/60 bg-neutral-600/40 px-3 py-1.5 rounded-2xl focus:outline-none focus:border-blue-600"
         />
+        <p className="text-xs text-neutral-500 text-left -mt-2">
+          3-30 characters: letters, numbers and underscores
+        </p>
         <input
           type="password"
           placeholder="Password"
@@ -54,6 +57,9 @@ const Register = () => {
           onChange={(e) => setPassword(e.target.value)}
           className="border border-neutral-700/60 bg-neutral-600/40 px-3 py-1.5 rounded-2xl focus:outline-none focus:border-blue-600"
         />
+        <p className="text-xs text-neutral-500 text-left -mt-2">
+          At least 8 characters
+        </p>
         {error && <p className="text-sm text-red-500">{error}</p>}
         <button
           type="submit"
